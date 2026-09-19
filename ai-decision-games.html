@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What Is AI and How Does It Make Decisions?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg: #E4F5DE;
+    --bg-deep: #D3EDC9;
+    --card: #FFFFFF;
+    --ink: #1F3326;
+    --ink-soft: #4B5F52;
+    --leaf: #2E9E5B;
+    --leaf-dark: #1F7A45;
+    --sun: #FFB534;
+    --sun-dark: #E89A16;
+    --coral: #FF6B5E;
+    --coral-dark: #E8503F;
+    --sky: #3AA6C9;
+    --sky-dark: #2586A6;
+    --line: #C3E3B9;
+    --shadow: rgba(31, 51, 38, 0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; min-height:100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family:'Nunito', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  body{
+    background-image:
+      radial-gradient(circle at 8% 12%, rgba(255,255,255,0.55) 0, transparent 45%),
+      radial-gradient(circle at 92% 85%, rgba(255,255,255,0.4) 0, transparent 40%);
+    padding-bottom: 40px;
+  }
+  h1,h2,h3{ font-family:'Baloo 2', system-ui, sans-serif; margin:0; color:var(--ink); }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 14px 20px;
+  }
+  .logo{
+    display:flex; align-items:center; gap:8px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700; font-size:13px;
+    color: var(--leaf-dark);
+    background: var(--card);
+    padding:6px 12px 6px 8px;
+    border-radius:100px;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .logo-dot{
+    width:20px; height:20px; border-radius:50%;
+    background: conic-gradient(from 210deg, var(--leaf), var(--sun), var(--sky), var(--leaf));
+    display:inline-block;
+    flex-shrink:0;
+  }
+  .chapter-tag{
+    font-size:12px; font-weight:700; color: var(--ink-soft);
+    background: rgba(255,255,255,0.7);
+    padding:6px 12px; border-radius:100px;
+  }
+  .wrap{ max-width: 760px; margin: 0 auto; padding: 10px 20px 20px; }
+  .screen{ display:none; animation: rise .35s ease; }
+  .screen.active{ display:block; }
+  @keyframes rise{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  /* Registration */
+  .hero{ text-align:center; margin: 18px 0 26px; }
+  .hero-badge{
+    display:inline-block; font-size:12px; font-weight:800; letter-spacing:.3px;
+    color: var(--leaf-dark); background: rgba(46,158,91,0.12);
+    padding:6px 14px; border-radius: 100px; margin-bottom:12px;
+  }
+  .hero h1{ font-size: 28px; line-height:1.25; color: var(--ink); }
+  .hero p{ color: var(--ink-soft); font-size:15px; margin-top:10px; max-width:520px; margin-left:auto; margin-right:auto;}
+
+  .card{
+    background: var(--card); border-radius: 22px; padding: 26px;
+    box-shadow: 0 10px 30px var(--shadow);
+  }
+  .field{ margin-bottom:16px; text-align:left; }
+  .field label{ display:block; font-weight:700; font-size:14px; margin-bottom:6px; color: var(--ink); }
+  .field input{
+    width:100%; padding:13px 14px; border-radius:14px;
+    border: 2px solid var(--line); font-size:16px; font-family:'Nunito',sans-serif;
+    background: #FBFFF9; color: var(--ink);
+  }
+  .field input:focus{ outline:none; border-color: var(--leaf); }
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:16px;
+    padding: 13px 22px; border-radius: 14px;
+    color:#fff; background: var(--leaf);
+    box-shadow: 0 6px 0 var(--leaf-dark);
+    transition: transform .08s ease;
+  }
+  .btn:active{ transform: translateY(4px); box-shadow: 0 2px 0 var(--leaf-dark); }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .btn.block{ width:100%; }
+  .btn.secondary{ background: var(--sky); box-shadow: 0 6px 0 var(--sky-dark); }
+  .btn.warm{ background: var(--sun); box-shadow: 0 6px 0 var(--sun-dark); color:#4A340A; }
+  .error-msg{ color: var(--coral-dark); font-size:13px; font-weight:700; margin-top:4px; display:none; }
+
+  /* Menu */
+  .greet{ font-size:14px; color: var(--ink-soft); font-weight:700; margin-bottom:4px; }
+  .games-grid{ display:grid; gap:16px; margin-top:20px; }
+  .game-card{
+    background: var(--card); border-radius:20px; padding:20px;
+    display:flex; align-items:center; gap:16px;
+    box-shadow: 0 8px 22px var(--shadow);
+    cursor:pointer; border: 2px solid transparent;
+    transition: border-color .15s ease, transform .1s ease;
+    text-align:left;
+  }
+  .game-card:hover{ border-color: var(--leaf); transform: translateY(-2px); }
+  .game-icon{
+    width:54px; height:54px; border-radius:16px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:26px;
+  }
+  .g1 .game-icon{ background: rgba(46,158,91,0.16); }
+  .g2 .game-icon{ background: rgba(255,181,52,0.22); }
+  .g3 .game-icon{ background: rgba(58,166,201,0.18); }
+  .game-card h3{ font-size:17px; margin-bottom:3px; }
+  .game-card p{ font-size:13px; color: var(--ink-soft); margin:0; }
+  .status-pill{
+    margin-left:auto; font-size:11px; font-weight:800; padding:5px 10px; border-radius:100px;
+    background: rgba(46,158,91,0.14); color: var(--leaf-dark); white-space:nowrap;
+  }
+  .status-pill.done{ background: rgba(46,158,91,0.9); color:#fff; }
+
+  .results-btn-wrap{ margin-top:22px; text-align:center; }
+
+  /* In-game header */
+  .game-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .back-link{
+    font-weight:700; font-size:14px; color: var(--leaf-dark); cursor:pointer;
+    background:none; border:none; padding:6px 0; font-family:'Nunito',sans-serif;
+  }
+  .progress-track{
+    height:8px; background: var(--line); border-radius:100px; overflow:hidden; margin: 6px 0 18px;
+  }
+  .progress-fill{ height:100%; background: var(--leaf); border-radius:100px; transition: width .3s ease; }
+
+  /* Game 1: sorting */
+  .sort-item{
+    background:#fff; border-radius:16px; padding:16px 18px; margin-bottom:12px;
+    box-shadow: 0 4px 12px var(--shadow);
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .sort-item .label{ font-weight:700; font-size:15px; flex:1; min-width:150px; }
+  .sort-choices{ display:flex; gap:8px; }
+  .choice-btn{
+    border:2px solid var(--line); background:#fff; border-radius:12px;
+    padding:8px 14px; font-weight:700; font-size:13px; cursor:pointer; font-family:'Nunito',sans-serif;
+    color: var(--ink);
+  }
+  .choice-btn.ai-choice.picked-correct{ background: var(--leaf); border-color: var(--leaf); color:#fff; }
+  .choice-btn.notai-choice.picked-correct{ background: var(--sky); border-color: var(--sky); color:#fff; }
+  .choice-btn.picked-wrong{ background: var(--coral); border-color: var(--coral); color:#fff; }
+  .choice-btn:disabled{ cursor:default; opacity:.9; }
+  .feedback-line{ width:100%; font-size:13px; font-weight:700; margin-top:6px; display:none; }
+  .feedback-line.correct{ color: var(--leaf-dark); }
+  .feedback-line.wrong{ color: var(--coral-dark); }
+
+  /* Game 2: quiz */
+  .quiz-q{ font-size:18px; font-weight:800; margin-bottom:18px; line-height:1.4; }
+  .quiz-opt{
+    display:block; width:100%; text-align:left; background:#fff; border:2px solid var(--line);
+    border-radius:14px; padding:14px 16px; margin-bottom:10px; font-family:'Nunito',sans-serif;
+    font-size:15px; font-weight:700; color: var(--ink); cursor:pointer;
+  }
+  .quiz-opt.correct{ background: rgba(46,158,91,0.15); border-color: var(--leaf); }
+  .quiz-opt.wrong{ background: rgba(255,107,94,0.15); border-color: var(--coral); }
+  .quiz-opt:disabled{ cursor:default; }
+  .quiz-explain{
+    background: rgba(58,166,201,0.1); border-radius:14px; padding:14px 16px;
+    font-size:14px; color: var(--ink-soft); margin-top:8px; display:none;
+  }
+  .quiz-next-wrap{ margin-top:16px; text-align:right; }
+
+  /* Game 3: matching */
+  .match-wrap{ display:flex; gap:14px; }
+  .match-col{ flex:1; display:flex; flex-direction:column; gap:10px; }
+  .match-item{
+    background:#fff; border:2px solid var(--line); border-radius:14px; padding:12px 14px;
+    font-size:13.5px; font-weight:700; cursor:pointer; text-align:left;
+  }
+  .match-item.selected{ border-color: var(--sky); background: rgba(58,166,201,0.12); }
+  .match-item.matched{ border-color: var(--leaf); background: rgba(46,158,91,0.14); cursor:default; }
+  .match-item.shake{ border-color: var(--coral); }
+
+  /* Game 4: robot maze */
+  .g4 .game-icon{ background: rgba(255,107,94,0.14); }
+  .robot-board{
+    display:grid; grid-template-columns: repeat(5, 1fr); gap:6px;
+    max-width:320px; margin: 0 auto 14px;
+  }
+  .robot-cell{
+    aspect-ratio:1; border-radius:12px; background:#F3FAF0; border:2px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+  }
+  .robot-cell.obstacle{ background: rgba(58,166,201,0.16); border-color: var(--sky); }
+  .robot-cell.home{ border-color: var(--sky); }
+  .robot-cell.school{ border-color: var(--sun); background: rgba(255,181,52,0.18); }
+  .robot-queue{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; min-height:32px; margin: 4px 0 10px; }
+  .queue-chip{ background:#fff; border:2px solid var(--line); border-radius:100px; padding:4px 12px; font-size:15px; font-weight:800; }
+  .robot-msg{ text-align:center; font-weight:800; font-size:13.5px; margin-bottom:10px; min-height:18px; }
+  .robot-msg.fail{ color: var(--coral-dark); }
+  .robot-controls{ display:flex; justify-content:center; margin-bottom:14px; }
+  .robot-dpad{ display:grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); gap:8px; }
+  .dpad-btn{
+    border:none; border-radius:12px; background: var(--card); box-shadow:0 4px 0 var(--line);
+    font-size:20px; cursor:pointer; font-family:'Nunito',sans-serif;
+  }
+  .dpad-btn:active{ transform:translateY(3px); box-shadow:none; }
+  .dpad-btn:disabled{ opacity:.5; cursor:default; }
+  .robot-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+
+  /* End of game screens */
+  .result-badge{
+    width:88px; height:88px; border-radius:50%; margin:0 auto 14px;
+    display:flex; align-items:center; justify-content:center; font-size:38px;
+    background: rgba(46,158,91,0.15);
+  }
+  .result-score{ text-align:center; font-family:'Baloo 2',sans-serif; font-size:32px; color: var(--leaf-dark); margin-bottom:4px; }
+  .result-caption{ text-align:center; color: var(--ink-soft); font-weight:700; margin-bottom:18px; }
+  .learn-box{
+    background: rgba(255,181,52,0.14); border-radius:16px; padding:16px 18px; margin-bottom:20px;
+  }
+  .learn-box .learn-title{ font-weight:800; font-size:13px; color:#8A5A00; margin-bottom:6px; text-transform:none; }
+  .learn-box p{ margin:0; font-size:14px; color:#5C4103; line-height:1.5; }
+  .end-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .end-actions .btn{ flex:1; }
+
+  /* Final results */
+  .final-summary-card{ text-align:center; }
+  .final-total{ font-family:'Baloo 2',sans-serif; font-size:44px; color: var(--leaf-dark); }
+  .mini-breakdown{ display:grid; gap:10px; margin: 18px 0; text-align:left; }
+  .mini-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background: #F6FBF4; border-radius:12px; padding:10px 14px; font-weight:700; font-size:14px;
+  }
+  .mini-row span.score{ color: var(--leaf-dark); }
+  .student-meta{ font-size:13px; color: var(--ink-soft); margin-bottom:14px; }
+
+  @media (max-width:480px){
+    .match-wrap{ gap:8px; }
+    .hero h1{ font-size:23px; }
+    .result-score{ font-size:26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><span class="logo-dot"></span>Young IT Germany</div>
+  <div class="chapter-tag">Getting Started with AI</div>
+</div>
+
+<div class="wrap">
+
+  <!-- REGISTRATION SCREEN -->
+  <section class="screen active" id="screen-register">
+    <div class="hero">
+      <div class="hero-badge">Chapter · Getting Started with Artificial Intelligence</div>
+      <h1>What Is AI and How Does It Make Decisions?</h1>
+      <p>Play three quick games to explore how AI looks at information and makes choices — then see what you've learned.</p>
+    </div>
+    <div class="card">
+      <div class="field">
+        <label for="stu-name">Your name</label>
+        <input type="text" id="stu-name" placeholder="e.g. Mia Schmidt" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="stu-class">Your class</label>
+        <input type="text" id="stu-class" placeholder="e.g. Class 4B" autocomplete="off">
+      </div>
+      <div class="error-msg" id="reg-error">Please enter both your name and class to start.</div>
+      <button class="btn block" id="btn-start-register">Start Learning</button>
+    </div>
+  </section>
+
+  <!-- MENU SCREEN -->
+  <section class="screen" id="screen-menu">
+    <div class="greet" id="menu-greet"></div>
+    <h1 style="font-size:24px; margin-bottom:6px;">Choose a game</h1>
+    <p style="color:var(--ink-soft); font-size:14px; margin-top:0;">Play them in any order. Each one teaches something different about AI decisions.</p>
+
+    <div class="games-grid">
+      <div class="game-card g1" data-game="sort" onclick="openGame('sort')">
+        <div class="game-icon">🧩</div>
+        <div>
+          <h3>AI or Not AI?</h3>
+          <p>Sort everyday things into "uses AI" or "just follows fixed rules".</p>
+        </div>
+        <div class="status-pill" id="pill-sort">Not started</div>
+      </div>
+
+      <div class="game-card g2" data-game="quiz" onclick="openGame('quiz')">
+        <div class="game-icon">🧠</div>
+        <div>
+          <h3>How Does AI Decide?</h3>
+          <p>A short quiz on how AI actually makes its decisions.</p>
+        </div>
+        <div class="status-pill" id="pill-quiz">Not started</div>
+      </div>
+
+      <div class="game-card g3" data-game="match" onclick="openGame('match')">
+        <div class="game-icon">🔗</div>
+        <div>
+          <h3>Match the Clues</h3>
+          <p>Match the information AI is given to the decision it makes.</p>
+        </div>
+        <div class="status-pill" id="pill-match">Not started</div>
+      </div>
+
+      <div class="game-card g4" data-game="robot" onclick="openGame('robot')">
+        <div class="game-icon">🤖</div>
+        <div>
+          <h3>Robot's Way to School</h3>
+          <p>Plan each step so the robot walks perfectly from home to school.</p>
+        </div>
+        <div class="status-pill" id="pill-robot">Not started</div>
+      </div>
+    </div>
+
+    <div class="results-btn-wrap">
+      <button class="btn secondary" onclick="showFinal()">See My Overall Result</button>
+    </div>
+  </section>
+
+  <!-- GAME 1: SORTING -->
+  <section class="screen" id="screen-sort">
+    <div class="game-header">
+      <button class="back-link" onclick="goMenu()">&larr; Back to games</button>
+      <div id="sort-counter" style="font-weight:800; font-size:13px; color:var(--ink-soft);"></div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="sort-progress"></div></div>
+    <h2 style="font-size:19px; margin-bottom:14px;">Tap AI or Not AI for each one</h2>
+    <div id="sort-items-wrap"></div>
+  </section>
+
+  <!-- GAME 1: END -->
+  <section class="screen" id="screen-sort-end">
+    <div class="card">
+      <div class="result-badge" id="sort-end-badge">🌱</div>
+      <div class="result-score"><span id="sort-end-score"></span></div>
+      <div class="result-caption">correct sorts</div>
+      <div class="learn-box">
+        <div class="learn-title">What you learned</div>
+        <p>Things like calculators, light switches and vending machines always follow the exact same fixed rule. AI-powered tools instead look at data — like your viewing history or writing style — and change their decision based on patterns they find in it.</p>
+      </div>
+      <div class="end-actions">
+        <button class="btn secondary block" onclick="goMenu()">Back to Games</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME 2: QUIZ -->
+  <section class="screen" id="screen-quiz">
+    <div class="game-header">
+      <button class="back-link" onclick="goMenu()">&larr; Back to games</button>
+      <div id="quiz-counter" style="font-weight:800; font-size:13px; color:var(--ink-soft);"></div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="quiz-progress"></div></div>
+    <div class="card">
+      <div class="quiz-q" id="quiz-question"></div>
+      <div id="quiz-options"></div>
+      <div class="quiz-explain" id="quiz-explain"></div>
+      <div class="quiz-next-wrap">
+        <button class="btn" id="quiz-next-btn" style="display:none;" onclick="quizNext()">Next</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME 2: END -->
+  <section class="screen" id="screen-quiz-end">
+    <div class="card">
+      <div class="result-badge" id="quiz-end-badge">🌱</div>
+      <div class="result-score"><span id="quiz-end-score"></span></div>
+      <div class="result-caption">correct answers</div>
+      <div class="learn-box">
+        <div class="learn-title">What you learned</div>
+        <p>AI doesn't "think" or "feel" — it looks for patterns in lots of examples (called training data), and uses those patterns to make a decision. Because it learns from examples, it can sometimes get things wrong, especially if its examples were unfair or incomplete.</p>
+      </div>
+      <div class="end-actions">
+        <button class="btn secondary block" onclick="goMenu()">Back to Games</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME 3: MATCHING -->
+  <section class="screen" id="screen-match">
+    <div class="game-header">
+      <button class="back-link" onclick="goMenu()">&larr; Back to games</button>
+      <div id="match-counter" style="font-weight:800; font-size:13px; color:var(--ink-soft);"></div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="match-progress"></div></div>
+    <h2 style="font-size:19px; margin-bottom:14px;">Tap a clue, then tap the decision it leads to</h2>
+    <div class="match-wrap">
+      <div class="match-col" id="match-col-left"></div>
+      <div class="match-col" id="match-col-right"></div>
+    </div>
+  </section>
+
+  <!-- GAME 3: END -->
+  <section class="screen" id="screen-match-end">
+    <div class="card">
+      <div class="result-badge" id="match-end-badge">🌱</div>
+      <div class="result-score"><span id="match-end-score"></span></div>
+      <div class="result-caption">correct matches</div>
+      <div class="learn-box">
+        <div class="learn-title">What you learned</div>
+        <p>Every AI decision starts with information (data) going in — like your search history or a photo. AI studies that information for patterns, then produces a decision or prediction, such as a recommendation, a sorted email, or a label on a photo.</p>
+      </div>
+      <div class="end-actions">
+        <button class="btn secondary block" onclick="goMenu()">Back to Games</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME 4: ROBOT MAZE -->
+  <section class="screen" id="screen-robot">
+    <div class="game-header">
+      <button class="back-link" onclick="goMenu()">&larr; Back to games</button>
+      <div id="robot-counter" style="font-weight:800; font-size:13px; color:var(--ink-soft);"></div>
+    </div>
+    <h2 style="font-size:19px; margin-bottom:4px;">Guide the robot from home to school</h2>
+    <p style="color:var(--ink-soft); font-size:13px; margin:0 0 14px;">Tap the arrows to plan each step, avoid the puddles 💧, then press Go.</p>
+    <div class="robot-board" id="robot-board"></div>
+    <div class="robot-queue" id="robot-queue"></div>
+    <div class="robot-msg" id="robot-msg"></div>
+    <div class="robot-controls">
+      <div class="robot-dpad">
+        <span></span><button class="dpad-btn" onclick="addMove('up')">↑</button><span></span>
+        <button class="dpad-btn" onclick="addMove('left')">←</button><span></span><button class="dpad-btn" onclick="addMove('right')">→</button>
+        <span></span><button class="dpad-btn" onclick="addMove('down')">↓</button><span></span>
+      </div>
+    </div>
+    <div class="robot-actions">
+      <button class="btn" onclick="runRobot()">Go!</button>
+      <button class="btn secondary" onclick="undoMove()">Undo</button>
+      <button class="btn secondary" onclick="clearMoves()">Clear</button>
+    </div>
+  </section>
+
+  <!-- GAME 4: END -->
+  <section class="screen" id="screen-robot-end">
+    <div class="card">
+      <div class="result-badge" id="robot-end-badge">🌟</div>
+      <div class="result-score"><span id="robot-end-score"></span></div>
+      <div class="result-caption" id="robot-end-caption">Great planning!</div>
+      <div class="learn-box">
+        <div class="learn-title">What you learned</div>
+        <p>This robot only ever does exactly what you told it, one step at a time — that's a fixed set of instructions, not AI. Real AI decisions work differently: instead of you writing every exact step, the AI studies lots of examples and works out its own pattern for what to do next.</p>
+      </div>
+      <div class="end-actions">
+        <button class="btn secondary block" onclick="goMenu()">Back to Games</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL RESULTS -->
+  <section class="screen" id="screen-final">
+    <div class="card final-summary-card">
+      <h2 style="font-size:20px; margin-bottom:6px;">Great work!</h2>
+      <div class="student-meta" id="final-student-meta"></div>
+      <div class="final-total" id="final-total">0 / 0</div>
+      <div class="result-caption">total correct across all games played</div>
+
+      <div class="mini-breakdown" id="final-breakdown"></div>
+
+      <div class="end-actions">
+        <button class="btn warm" onclick="downloadPDF()">Download My Result (PDF)</button>
+        <button class="btn secondary" onclick="goMenu()">Back to Games</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ---------- STATE ---------- */
+const student = { name: '', className: '' };
+const results = {
+  sort:  { played:false, correct:0, total:0 },
+  quiz:  { played:false, correct:0, total:0 },
+  match: { played:false, correct:0, total:0 },
+  robot: { played:false, correct:0, total:0 }
+};
+const GAME_KEYS = ['sort','quiz','match','robot'];
+const GAME_NAMES = { sort:'AI or Not AI?', quiz:'How Does AI Decide?', match:'Match the Clues', robot:"Robot's Way to School" };
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goMenu(){ refreshPills(); show('screen-menu'); }
+
+/* ---------- REGISTRATION ---------- */
+document.getElementById('btn-start-register').addEventListener('click', () => {
+  const name = document.getElementById('stu-name').value.trim();
+  const cls = document.getElementById('stu-class').value.trim();
+  const err = document.getElementById('reg-error');
+  if(!name || !cls){
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  student.name = name;
+  student.className = cls;
+  document.getElementById('menu-greet').textContent = `Hi ${student.name} (${student.className}) 👋`;
+  goMenu();
+});
+
+function openGame(key){
+  if(key === 'sort'){ startSort(); show('screen-sort'); }
+  if(key === 'quiz'){ startQuiz(); show('screen-quiz'); }
+  if(key === 'match'){ startMatch(); show('screen-match'); }
+  if(key === 'robot'){ startRobot(); show('screen-robot'); }
+}
+
+function refreshPills(){
+  GAME_KEYS.forEach(k => {
+    const pill = document.getElementById('pill-' + k);
+    if(results[k].played){
+      pill.textContent = `Done · ${results[k].correct}/${results[k].total}`;
+      pill.classList.add('done');
+    } else {
+      pill.textContent = 'Not started';
+      pill.classList.remove('done');
+    }
+  });
+}
+
+/* ---------- GAME 1: AI or Not AI (sorting) ---------- */
+const sortData = [
+  { label: 'A streaming app suggesting what to watch next', ai:true },
+  { label: 'A basic calculator adding two numbers', ai:false },
+  { label: 'A voice assistant understanding what you said', ai:true },
+  { label: 'A wall light switch turning a lamp on', ai:false },
+  { label: 'An email app sorting spam from real mail', ai:true },
+  { label: 'A vending machine giving a snack for a coin', ai:false },
+  { label: 'A photo app recognising faces in pictures', ai:true },
+  { label: 'A traditional alarm clock ringing at 7:00', ai:false }
+];
+let sortState = [];
+
+function startSort(){
+  sortState = sortData.map(d => ({...d, answered:null}));
+  renderSort();
+}
+function renderSort(){
+  const wrap = document.getElementById('sort-items-wrap');
+  wrap.innerHTML = '';
+  sortState.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'sort-item';
+    div.innerHTML = `
+      <div class="label">${item.label}</div>
+      <div class="sort-choices">
+        <button class="choice-btn ai-choice" data-i="${i}" data-pick="true">Uses AI</button>
+        <button class="choice-btn notai-choice" data-i="${i}" data-pick="false">Fixed Rule</button>
+      </div>
+      <div class="feedback-line" id="sort-fb-${i}"></div>
+    `;
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.addEventListener('click', onSortPick);
+  });
+  updateSortProgress();
+}
+function onSortPick(e){
+  const i = parseInt(e.target.getAttribute('data-i'));
+  if(sortState[i].answered !== null) return;
+  const pick = e.target.getAttribute('data-pick') === 'true';
+  const correct = pick === sortState[i].ai;
+  sortState[i].answered = correct;
+
+  const itemEl = e.target.closest('.sort-item');
+  itemEl.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+  e.target.classList.add(correct ? 'picked-correct' : 'picked-wrong');
+
+  const fb = document.getElementById('sort-fb-' + i);
+  fb.style.display = 'block';
+  if(correct){
+    fb.textContent = '✔ Correct!';
+    fb.className = 'feedback-line correct';
+  } else {
+    fb.textContent = sortState[i].ai ? '✘ This one actually uses AI.' : '✘ This one just follows a fixed rule.';
+    fb.className = 'feedback-line wrong';
+  }
+  updateSortProgress();
+
+  if(sortState.every(s => s.answered !== null)){
+    const correctCount = sortState.filter(s => s.answered).length;
+    results.sort = { played:true, correct: correctCount, total: sortState.length };
+    setTimeout(() => finishGame('sort'), 700);
+  }
+}
+function updateSortProgress(){
+  const done = sortState.filter(s => s.answered !== null).length;
+  document.getElementById('sort-counter').textContent = `${done} / ${sortState.length}`;
+  document.getElementById('sort-progress').style.width = `${(done/sortState.length)*100}%`;
+}
+
+/* ---------- GAME 2: How Does AI Decide? (quiz) ---------- */
+const quizData = [
+  {
+    q: "How does an AI system mostly make its decisions?",
+    options: [
+      "By guessing randomly",
+      "By finding patterns in lots of data it has seen before",
+      "By feeling what seems right",
+      "By asking a human for every single decision"
+    ],
+    correct: 1,
+    explain: "AI looks for patterns in data — for example, thousands of past photos, messages, or choices — and uses those patterns to decide."
+  },
+  {
+    q: "What is 'training data' used for?",
+    options: [
+      "It's the electricity that powers the computer",
+      "It's the examples an AI studies so it can learn to spot patterns",
+      "It's a password needed to turn AI on",
+      "It's a game AI plays for fun"
+    ],
+    correct: 1,
+    explain: "Training data is the set of examples (like pictures, texts, or numbers) the AI studies before it can start making decisions."
+  },
+  {
+    q: "Can an AI's decision ever be wrong?",
+    options: [
+      "No, AI is always 100% correct",
+      "Yes — if its data was incomplete, unfair, or unusual, its decision can be wrong",
+      "Only on Mondays",
+      "Only if a human tells it to be wrong"
+    ],
+    correct: 1,
+    explain: "Because AI learns from examples rather than 'knowing' facts, it can make mistakes — especially with data it hasn't seen much of before."
+  },
+  {
+    q: "Which of these best describes what makes AI different from a simple calculator?",
+    options: [
+      "AI is louder",
+      "A calculator always follows the same fixed rule; AI adjusts its answer based on patterns in data",
+      "AI needs no electricity",
+      "There is no real difference"
+    ],
+    correct: 1,
+    explain: "A calculator's rule (2+2=4) never changes. AI's output can change depending on the data and patterns it has learned."
+  }
+];
+let quizIndex = 0, quizCorrect = 0, quizAnswered = false;
+
+function startQuiz(){ quizIndex = 0; quizCorrect = 0; renderQuizQuestion(); }
+function renderQuizQuestion(){
+  quizAnswered = false;
+  const item = quizData[quizIndex];
+  document.getElementById('quiz-question').textContent = item.q;
+  const optsWrap = document.getElementById('quiz-options');
+  optsWrap.innerHTML = '';
+  item.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'quiz-opt';
+    b.textContent = opt;
+    b.addEventListener('click', () => selectQuizOption(i));
+    optsWrap.appendChild(b);
+  });
+  document.getElementById('quiz-explain').style.display = 'none';
+  document.getElementById('quiz-next-btn').style.display = 'none';
+  document.getElementById('quiz-counter').textContent = `${quizIndex+1} / ${quizData.length}`;
+  document.getElementById('quiz-progress').style.width = `${(quizIndex/quizData.length)*100}%`;
+}
+function selectQuizOption(i){
+  if(quizAnswered) return;
+  quizAnswered = true;
+  const item = quizData[quizIndex];
+  const btns = document.querySelectorAll('.quiz-opt');
+  btns.forEach((b, idx) => {
+    b.disabled = true;
+    if(idx === item.correct) b.classList.add('correct');
+    else if(idx === i) b.classList.add('wrong');
+  });
+  if(i === item.correct) quizCorrect++;
+  const ex = document.getElementById('quiz-explain');
+  ex.textContent = item.explain;
+  ex.style.display = 'block';
+  document.getElementById('quiz-next-btn').style.display = 'inline-block';
+  document.getElementById('quiz-next-btn').textContent = (quizIndex === quizData.length - 1) ? 'See Result' : 'Next';
+}
+function quizNext(){
+  quizIndex++;
+  if(quizIndex >= quizData.length){
+    results.quiz = { played:true, correct: quizCorrect, total: quizData.length };
+    document.getElementById('quiz-progress').style.width = '100%';
+    finishGame('quiz');
+    return;
+  }
+  renderQuizQuestion();
+}
+
+/* ---------- GAME 3: Match the Clues ---------- */
+const matchPairs = [
+  { left: "Your watch history on a video app", right: "Suggests a new show you might like" },
+  { left: "Thousands of photos labelled 'cat' or 'dog'", right: "Learns to tell cats and dogs apart in new photos" },
+  { left: "Examples of spam and normal emails", right: "Sorts new emails into inbox or spam" },
+  { left: "Your typing patterns and past messages", right: "Predicts the next word as you type" }
+];
+let matchState = { leftPicked:null, rightOrder:[], leftOrder:[], solved:0 };
+
+function shuffle(arr){ return arr.map(v => [Math.random(), v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]); }
+
+function startMatch(){
+  matchState = {
+    leftPicked: null,
+    solved: 0,
+    left: matchPairs.map((p,i)=>({...p, id:i, matched:false})),
+    right: shuffle(matchPairs.map((p,i)=>({...p, id:i, matched:false})))
+  };
+  renderMatch();
+}
+function renderMatch(){
+  const leftCol = document.getElementById('match-col-left');
+  const rightCol = document.getElementById('match-col-right');
+  leftCol.innerHTML = '';
+  rightCol.innerHTML = '';
+  matchState.left.forEach(item => {
+    const d = document.createElement('div');
+    d.className = 'match-item' + (item.matched ? ' matched' : '') + (matchState.leftPicked === item.id && !item.matched ? ' selected' : '');
+    d.textContent = item.left;
+    if(!item.matched) d.addEventListener('click', () => pickLeft(item.id));
+    leftCol.appendChild(d);
+  });
+  matchState.right.forEach(item => {
+    const d = document.createElement('div');
+    d.className = 'match-item' + (item.matched ? ' matched' : '');
+    d.textContent = item.right;
+    if(!item.matched) d.addEventListener('click', () => pickRight(item.id, d));
+    rightCol.appendChild(d);
+  });
+  document.getElementById('match-counter').textContent = `${matchState.solved} / ${matchPairs.length}`;
+  document.getElementById('match-progress').style.width = `${(matchState.solved/matchPairs.length)*100}%`;
+}
+function pickLeft(id){
+  matchState.leftPicked = id;
+  renderMatch();
+}
+function pickRight(id, el){
+  if(matchState.leftPicked === null) return;
+  if(matchState.leftPicked === id){
+    matchState.left.find(i=>i.id===id).matched = true;
+    matchState.right.find(i=>i.id===id).matched = true;
+    matchState.solved++;
+    matchState.leftPicked = null;
+    renderMatch();
+    if(matchState.solved === matchPairs.length){
+      results.match = { played:true, correct: matchPairs.length, total: matchPairs.length };
+      setTimeout(() => finishGame('match'), 500);
+    }
+  } else {
+    el.classList.add('shake');
+    setTimeout(() => el.classList.remove('shake'), 400);
+  }
+}
+
+/* ---------- END-OF-GAME SCREENS ---------- */
+function badgeFor(correct, total){
+  const ratio = total ? correct/total : 0;
+  if(ratio === 1) return '🌟';
+  if(ratio >= 0.5) return '🌿';
+  return '🌱';
+}
+function finishGame(key){
+  const r = results[key];
+  document.getElementById(key + '-end-badge').textContent = badgeFor(r.correct, r.total);
+  document.getElementById(key + '-end-score').textContent = `${r.correct} / ${r.total}`;
+  show('screen-' + key + '-end');
+}
+
+/* ---------- FINAL RESULTS ---------- */
+function showFinal(){
+  document.getElementById('final-student-meta').textContent = `${student.name} · ${student.className}`;
+  let totalCorrect = 0, totalQuestions = 0;
+  const breakdown = document.getElementById('final-breakdown');
+  breakdown.innerHTML = '';
+  GAME_KEYS.forEach(k => {
+    const r = results[k];
+    totalCorrect += r.correct;
+    totalQuestions += r.total;
+    const row = document.createElement('div');
+    row.className = 'mini-row';
+    row.innerHTML = `<span>${GAME_NAMES[k]}</span><span class="score">${r.played ? r.correct + ' / ' + r.total : 'Not played yet'}</span>`;
+    breakdown.appendChild(row);
+  });
+  document.getElementById('final-total').textContent = `${totalCorrect} / ${totalQuestions}`;
+  show('screen-final');
+}
+
+/* ---------- PDF DOWNLOAD ---------- */
+function downloadPDF(){
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const names = GAME_NAMES;
+    let y = 20;
+    doc.setFontSize(16);
+    doc.text('Young IT Germany — AI Decisions Result', 15, y); y += 10;
+    doc.setFontSize(11);
+    doc.text('Chapter: Getting Started with Artificial Intelligence', 15, y); y += 6;
+    doc.text('Topic: What Is AI and How Does It Make Decisions?', 15, y); y += 10;
+    doc.setFontSize(12);
+    doc.text(`Name: ${student.name}`, 15, y); y += 7;
+    doc.text(`Class: ${student.className}`, 15, y); y += 12;
+
+    let totalCorrect = 0, totalQuestions = 0;
+    doc.setFontSize(12);
+    doc.text('Game results:', 15, y); y += 8;
+    GAME_KEYS.forEach(k => {
+      const r = results[k];
+      totalCorrect += r.correct;
+      totalQuestions += r.total;
+      const line = `${names[k]}: ${r.played ? r.correct + ' / ' + r.total : 'Not played'}`;
+      doc.text(line, 20, y); y += 7;
+    });
+    y += 6;
+    doc.setFontSize(13);
+    doc.text(`Total score: ${totalCorrect} / ${totalQuestions}`, 15, y); y += 12;
+
+    doc.setFontSize(11);
+    doc.text('What this chapter teaches:', 15, y); y += 7;
+    const lines = doc.splitTextToSize(
+      'AI makes decisions by finding patterns in data it has studied (training data), rather than following one fixed rule like a calculator. Because it learns from examples, it can sometimes be wrong, especially with data it has not seen before.',
+      175
+    );
+    doc.text(lines, 15, y);
+
+    doc.save(`${student.name.replace(/\\s+/g,'_')}_AI_Decisions_Result.pdf`);
+  } catch(err){
+    alert('Could not generate the PDF right now. Please try again.');
+  }
+}
+
+/* ---------- GAME 4: Robot's Way to School ---------- */
+const robotObstacles = new Set(['1,1','2,3','3,0','1,3']);
+const robotGoal = { r:4, c:4 };
+let robotQueue = [];
+
+function startRobot(){
+  robotQueue = [];
+  renderRobotBoard({ r:0, c:0 });
+  renderQueue();
+  setMsg('', '');
+  disableControls(false);
+}
+function renderRobotBoard(pos){
+  const board = document.getElementById('robot-board');
+  board.innerHTML = '';
+  for(let r = 0; r < 5; r++){
+    for(let c = 0; c < 5; c++){
+      const cell = document.createElement('div');
+      let cls = 'robot-cell';
+      const isObstacle = robotObstacles.has(`${r},${c}`);
+      const isHome = r === 0 && c === 0;
+      const isSchool = r === 4 && c === 4;
+      if(isObstacle) cls += ' obstacle';
+      if(isHome) cls += ' home';
+      if(isSchool) cls += ' school';
+      cell.className = cls;
+      if(pos.r === r && pos.c === c) cell.textContent = '🤖';
+      else if(isObstacle) cell.textContent = '💧';
+      else if(isHome) cell.textContent = '🏠';
+      else if(isSchool) cell.textContent = '🏫';
+      board.appendChild(cell);
+    }
+  }
+}
+function renderQueue(){
+  const q = document.getElementById('robot-queue');
+  q.innerHTML = '';
+  const arrows = { up:'↑', down:'↓', left:'←', right:'→' };
+  robotQueue.forEach(d => {
+    const chip = document.createElement('span');
+    chip.className = 'queue-chip';
+    chip.textContent = arrows[d];
+    q.appendChild(chip);
+  });
+  document.getElementById('robot-counter').textContent = `${robotQueue.length} step${robotQueue.length === 1 ? '' : 's'} planned`;
+}
+function addMove(dir){
+  if(robotQueue.length >= 20) return;
+  robotQueue.push(dir);
+  renderQueue();
+}
+function undoMove(){
+  robotQueue.pop();
+  renderQueue();
+}
+function clearMoves(){
+  robotQueue = [];
+  renderQueue();
+  setMsg('', '');
+  renderRobotBoard({ r:0, c:0 });
+}
+function setMsg(text, cls){
+  const el = document.getElementById('robot-msg');
+  el.textContent = text;
+  el.className = 'robot-msg' + (cls ? (' ' + cls) : '');
+}
+function disableControls(disabled){
+  document.querySelectorAll('.dpad-btn').forEach(b => b.disabled = disabled);
+}
+function runRobot(){
+  if(robotQueue.length === 0){
+    setMsg('Add at least one step before pressing Go.', 'fail');
+    return;
+  }
+  disableControls(true);
+  setMsg('', '');
+  let pos = { r:0, c:0 };
+  renderRobotBoard(pos);
+  let i = 0;
+  const timer = setInterval(() => {
+    if(i >= robotQueue.length){
+      clearInterval(timer);
+      disableControls(false);
+      if(pos.r === robotGoal.r && pos.c === robotGoal.c){
+        results.robot = { played:true, correct:1, total:1 };
+        setTimeout(() => finishRobot(true), 300);
+      } else {
+        setMsg("Not at school yet — adjust your steps and try again.", 'fail');
+      }
+      return;
+    }
+    const dir = robotQueue[i];
+    const next = { ...pos };
+    if(dir === 'up') next.r -= 1;
+    if(dir === 'down') next.r += 1;
+    if(dir === 'left') next.c -= 1;
+    if(dir === 'right') next.c += 1;
+    const outOfBounds = next.r < 0 || next.r > 4 || next.c < 0 || next.c > 4;
+    const hitObstacle = !outOfBounds && robotObstacles.has(`${next.r},${next.c}`);
+    if(outOfBounds || hitObstacle){
+      clearInterval(timer);
+      disableControls(false);
+      setMsg(outOfBounds ? "The robot walked off the path — try again." : "Splash! That step lands in a puddle — try again.", 'fail');
+      return;
+    }
+    pos = next;
+    renderRobotBoard(pos);
+    i++;
+  }, 450);
+}
+function finishRobot(success){
+  document.getElementById('robot-end-badge').textContent = success ? '🌟' : '🌱';
+  document.getElementById('robot-end-score').textContent = success ? `Solved in ${robotQueue.length} steps!` : 'Keep trying!';
+  show('screen-robot-end');
+}
+</script>
+</body>
+</html>
